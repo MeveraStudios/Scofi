@@ -113,7 +113,7 @@ mavenPublishing {
     }
 
     if (!gradle.startParameter.taskNames.any { it == "publishToMavenLocal" }) {
-        publishToMavenCentral()
+        publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL)
         signAllPublications()
     }
 }
