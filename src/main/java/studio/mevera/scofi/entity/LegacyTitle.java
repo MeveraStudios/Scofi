@@ -11,6 +11,11 @@ import java.util.Arrays;
  * Builder for legacy titles (String content).
  */
 public final class LegacyTitle extends AbstractTitle<String> {
+	
+	LegacyTitle() {
+	
+	}
+	
 	/**
 	 * Sets the legacy text for the title, translating color codes.
 	 * @param content legacy string content

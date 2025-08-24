@@ -213,7 +213,7 @@ public class LegacyBoard extends BoardBase<String> {
                 cachedTitleAnimation = newTitleAnimation;
             } else {
                 // Use the cached animation to preserve state
-                ((Title.TitleImplementation<String>) newTitle).setTitleAnimation(cachedTitleAnimation);
+                newTitle.setTitleAnimation(cachedTitleAnimation);
             }
         } else {
             cachedTitleAnimation = null;
