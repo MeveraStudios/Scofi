@@ -144,6 +144,22 @@ public interface Line<T> {
             this.animation = customAnimation;
             return this;
         }
+        
+        /**
+         * Adds a custom animation to the line using the provided original content and sequence.
+         * Each string in the sequence will have color codes translated.
+         *
+         * @param originalContent the base content for the animation, with color codes
+         * @param sequence the sequence of strings for the animation, each with color codes
+         * @return this builder with the animation applied
+         */
+        public LegacyLineBuilder withAnimation(String originalContent, String... sequence) {
+            String[] coloredSequence = java.util.Arrays.stream(sequence)
+                    .map(s -> ChatColor.translateAlternateColorCodes('&', s))
+                    .toArray(String[]::new);
+            return withAnimation(new Animation<>(ChatColor.translateAlternateColorCodes('&', originalContent), coloredSequence));
+        }
+        
         /**
          * Builds the legacy line instance.
          * @return legacy line
