@@ -38,7 +38,6 @@ public interface Title<T> {
 	 * @return the title instance with animation
 	 */
 	Title<T> withAnimation(@Nullable Animation<T> animation);
-	
 	/**
 	 * Loads the animation for the title, if present.
 	 * @return optional animation
@@ -73,6 +72,9 @@ public interface Title<T> {
 	class TitleImplementation<T> implements Title<T>{
 		protected T content;
 		private Animation<T> titleAnimation;
+		// Cache the last animated frame to avoid re-computing
+		private T lastAnimatedFrame;
+		private boolean needsUpdate = true;
 		/**
 		 * Default constructor.
 		 */
@@ -90,11 +92,19 @@ public interface Title<T> {
 		 */
 		@Override
 		public @NotNull Optional<T> get() {
-			// FIXED: Check for animation first, similar to Line.fetchContent()
 			if (titleAnimation != null) {
-				return Optional.of(titleAnimation.fetchNextChange());
+				// Only fetch next frame if needed, cache it
+				if (needsUpdate) {
+					lastAnimatedFrame = titleAnimation.fetchNextChange();
+					needsUpdate = false;
+				}
+				return Optional.of(lastAnimatedFrame);
 			}
 			return Optional.of(content);
+		}
+		// Mark that animation needs update on next tick
+		public void markForUpdate() {
+			needsUpdate = true;
 		}
 		/**
 		 * Sets the content of the title.
@@ -115,13 +125,14 @@ public interface Title<T> {
 			if(titleAnimation != null) {
 				this.content = titleAnimation.getOriginal();
 			}
+			needsUpdate = true;
 		}
 		/**
 		 * Sets an animation for the title and returns the instance.
 		 * @param animation the animation
 		 * @return the title instance with animation
 		 */
-		@Override @SuppressWarnings("unchecked")
+		@Override
 		public Title<T> withAnimation(@Nullable Animation<T> animation) {
 			setTitleAnimation(animation);
 			return this;
@@ -155,9 +166,7 @@ public interface Title<T> {
 			 */
 			public LegacyTitle withScroll(int width, int spaceBetween) {
 				if(this.content == null) {
-					throw new IllegalArgumentException("You cannot call withScroll() without calling #ofText() before it to set the text, " +
-						"the scrolling animation will be based on no text," +
-						" Alternatively you can set it using #withAnimation");
+					throw new IllegalArgumentException("You cannot call withScroll() without calling #ofText() before it to set the text");
 				}
 				return (LegacyTitle) super.withAnimation(ScrollAnimation.of(this.content, width, spaceBetween));
 			}
@@ -169,9 +178,7 @@ public interface Title<T> {
 			 */
 			public LegacyTitle withHighlight(org.bukkit.ChatColor primaryColor, org.bukkit.ChatColor secondaryColor) {
 				if(this.content == null) {
-					throw new IllegalArgumentException("You cannot call withHighlight() without calling #ofText() before it to set the text, " +
-						"the scrolling animation will be based on no text," +
-						" Alternatively you can set it using #withAnimation");
+					throw new IllegalArgumentException("You cannot call withHighlight() without calling #ofText() before it to set the text");
 				}
 				return (LegacyTitle) super.withAnimation(HighlightingAnimation.of(this.content, primaryColor, secondaryColor));
 			}

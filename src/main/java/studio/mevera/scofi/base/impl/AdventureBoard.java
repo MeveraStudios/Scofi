@@ -5,6 +5,7 @@ import studio.mevera.scofi.animation.core.Animation;
 import studio.mevera.scofi.base.BoardBase;
 import studio.mevera.scofi.base.BoardUpdate;
 import studio.mevera.scofi.base.ModernBoardAdapter;
+import studio.mevera.scofi.entity.Body;
 import studio.mevera.scofi.entity.Line;
 import studio.mevera.scofi.entity.Title;
 import studio.mevera.scofi.util.FastReflection;
@@ -155,29 +156,42 @@ public class AdventureBoard extends BoardBase<Component> {
     @Override
     public boolean update() {
         try {
-            // Get new title and body from adapter (for dynamic content)
+            // Get new title from adapter
             Title<Component> newTitle = adapter.getTitle(getPlayer());
             
             // Handle title animation caching
             if (newTitle.loadAnimation().isPresent()) {
                 Animation<Component> newTitleAnimation = newTitle.loadAnimation().get();
                 
-                // If we don't have a cached animation or it's a different animation, cache it
                 if (cachedTitleAnimation == null || !isSameAnimation(cachedTitleAnimation, newTitleAnimation)) {
                     cachedTitleAnimation = newTitleAnimation;
                 } else {
-                    // Use the cached animation to preserve state
                     ((Title.TitleImplementation<Component>) newTitle).setTitleAnimation(cachedTitleAnimation);
                 }
             } else {
                 cachedTitleAnimation = null;
             }
             
-            // Update title with preserved animation state
-            updateTitle(newTitle.get().orElseThrow(IllegalStateException::new));
+            // Mark title for update before fetching
+            if (newTitle instanceof Title.TitleImplementation) {
+                ((Title.TitleImplementation<Component>) newTitle).markForUpdate();
+            }
+            
+            // Update title ONCE
+            Component titleContent = newTitle.get().orElseThrow(IllegalStateException::new);
+            updateTitle(titleContent);
+            
+            // Get body from adapter
+            Body<Component> body = adapter.getBody(getPlayer());
+            
+            // Clear any previous lines to ensure clean state
+            if (body.getLines().size() != this.getLines().size()) {
+                // Size changed, need full update
+                updateLines(); // Clear first
+            }
             
             // Handle body/lines with animation caching
-            for (Line<Component> line : adapter.getBody(getPlayer()).getLines()) {
+            for (Line<Component> line : body.getLines()) {
                 int index = line.getIndex();
                 Component content;
                 
@@ -186,18 +200,15 @@ public class AdventureBoard extends BoardBase<Component> {
                     Animation<Component> lineAnimation = line.getAnimation();
                     Animation<Component> cachedAnimation = cachedLineAnimations.get(index);
                     
-                    // If we don't have a cached animation or it's different, cache the new one
                     if (cachedAnimation == null || !isSameAnimation(cachedAnimation, lineAnimation)) {
                         cachedLineAnimations.put(index, lineAnimation);
                         line.setAnimation(lineAnimation);
                     } else {
-                        // Use cached animation to preserve state
                         line.setAnimation(cachedAnimation);
                     }
                     
                     content = line.fetchContent();
                 } else {
-                    // Remove cached animation if line no longer has one
                     cachedLineAnimations.remove(index);
                     content = line.getContent();
                 }
@@ -206,13 +217,14 @@ public class AdventureBoard extends BoardBase<Component> {
             }
             
             // Clean up cached animations for lines that no longer exist
-            int bodySize = adapter.getBody(getPlayer()).getLines().size();
+            int bodySize = body.getLines().size();
             cachedLineAnimations.entrySet().removeIf(entry -> entry.getKey() >= bodySize);
             
             return true;
         } catch (ClassCastException e) {
             // Fallback for legacy text
-            for (Line<?> line : adapter.getBody(getPlayer()).getLines()) {
+            Body<?> body = adapter.getBody(getPlayer());
+            for (Line<?> line : body.getLines()) {
                 updateLine(line.getIndex(), deserialize(line.fetchContent()));
             }
             updateTitle(deserialize(adapter.getTitle(getPlayer()).get().orElseThrow(IllegalStateException::new)));

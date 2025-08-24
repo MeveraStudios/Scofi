@@ -5,6 +5,7 @@ import studio.mevera.scofi.animation.core.Animation;
 import studio.mevera.scofi.base.BoardBase;
 import studio.mevera.scofi.base.BoardUpdate;
 import studio.mevera.scofi.base.LegacyBoardAdapter;
+import studio.mevera.scofi.entity.Body;
 import studio.mevera.scofi.entity.Line;
 import studio.mevera.scofi.entity.Title;
 import studio.mevera.scofi.util.FastReflection;
@@ -201,29 +202,43 @@ public class LegacyBoard extends BoardBase<String> {
      */
     @Override
     public boolean update() {
-        // Get new title and body from adapter (for dynamic content)
+        // Get new title from adapter
         Title<String> newTitle = adapter.getTitle(getPlayer());
         
         // Handle title animation caching
         if (newTitle.loadAnimation().isPresent()) {
             Animation<String> newTitleAnimation = newTitle.loadAnimation().get();
             
-            // If we don't have a cached animation or it's a different animation, cache it
             if (cachedTitleAnimation == null || !isSameAnimation(cachedTitleAnimation, newTitleAnimation)) {
                 cachedTitleAnimation = newTitleAnimation;
             } else {
-                // Use the cached animation to preserve state
+                // Use cached animation to preserve state
                 ((Title.TitleImplementation<String>) newTitle).setTitleAnimation(cachedTitleAnimation);
             }
         } else {
             cachedTitleAnimation = null;
         }
         
-        // Update title with preserved animation state
-        updateTitle(newTitle.get().orElseThrow(IllegalStateException::new));
+        // Mark title for update before fetching
+        if (newTitle instanceof Title.TitleImplementation) {
+            ((Title.TitleImplementation<String>) newTitle).markForUpdate();
+        }
+        
+        // Update title ONCE
+        String titleContent = newTitle.get().orElseThrow(IllegalStateException::new);
+        updateTitle(titleContent);
+        
+        // Get body from adapter
+        Body<String> body = adapter.getBody(getPlayer());
+        
+        // Clear any previous lines to ensure clean state
+        if (body.getLines().size() != this.getLines().size()) {
+            // Size changed, need full update
+            updateLines(); // Clear first
+        }
         
         // Handle body/lines with animation caching
-        for (Line<String> line : adapter.getBody(getPlayer()).getLines()) {
+        for (Line<String> line : body.getLines()) {
             int index = line.getIndex();
             
             // Handle line animation caching
@@ -231,23 +246,21 @@ public class LegacyBoard extends BoardBase<String> {
                 Animation<String> lineAnimation = line.getAnimation();
                 Animation<String> cachedAnimation = cachedLineAnimations.get(index);
                 
-                // If we don't have a cached animation or it's different, cache the new one
                 if (cachedAnimation == null || !isSameAnimation(cachedAnimation, lineAnimation)) {
                     cachedLineAnimations.put(index, lineAnimation);
                 } else {
-                    // Use cached animation to preserve state
                     line.setAnimation(cachedAnimation);
                 }
             } else {
-                // Remove cached animation if line no longer has one
                 cachedLineAnimations.remove(index);
             }
             
+            // Update line with its own content
             updateLine(index, line.fetchContent());
         }
         
         // Clean up cached animations for lines that no longer exist
-        int bodySize = adapter.getBody(getPlayer()).getLines().size();
+        int bodySize = body.getLines().size();
         cachedLineAnimations.entrySet().removeIf(entry -> entry.getKey() >= bodySize);
         
         return true;
