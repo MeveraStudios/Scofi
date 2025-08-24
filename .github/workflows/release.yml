@@ -40,6 +40,9 @@ jobs:
           chmod +x ./gradlew
           ./gradlew build
 
+      - name: Debug Environment Variables
+        run: env | grep MAVEN
+
       - name: 🚀 Deploy
         run: ./gradlew publishAndReleaseToMavenCentral
         env:
