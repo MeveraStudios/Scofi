@@ -39,9 +39,10 @@ jobs:
         run: |
           chmod +x ./gradlew
           ./gradlew build
-
+          
       - name: 🚀 Deploy
-        run: ./gradlew publishAndReleaseToMavenCentral
+        run: | 
+          ./gradlew publishAndReleaseToMavenCentral
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_USERNAME }}
