@@ -5,7 +5,7 @@ Scofi ensures a smoother developer experience when creating scoreboards, by prov
 ## Features
 - Compatible with 1.8-1.21
 - Packet-based scoreboard displaying.
-- Asynchronous automated updates
+- Asynchronous automated scoreboard updates
 - Animations (Pre-made & Customizable)
 - Adventure support
 
