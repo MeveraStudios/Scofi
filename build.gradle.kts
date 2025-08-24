@@ -1,6 +1,3 @@
-import org.gradle.api.tasks.compile.JavaCompile
-import org.gradle.api.tasks.javadoc.Javadoc
-
 plugins {
     java
     id("com.vanniktech.maven.publish") version "0.29.0" // Note: 0.33.0 is not a valid version, latest is 0.29.0
@@ -116,8 +113,8 @@ mavenPublishing {
     }
 
     if (!gradle.startParameter.taskNames.any { it == "publishToMavenLocal" }) {
-        publishToMavenCentral()
         signAllPublications()
+        publishToMavenCentral()
     }
 }
 
