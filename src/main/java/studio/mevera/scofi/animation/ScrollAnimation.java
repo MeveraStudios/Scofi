@@ -6,60 +6,95 @@ import org.bukkit.ChatColor;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Animation for scrolling text horizontally, creating a marquee effect.
- * <p>
- * Uses {@link Scroller} to animate the scrolling, supporting legacy color codes. Typically used for scoreboard or
- * text display animations where content needs to move or loop. Instances are created via static factory methods.
- * </p>
- * <p>
- * Usage example:
- * <pre>
- *     Animation<String> anim = ScrollAnimation.of("Welcome!", 10, 2);
- *     String frame = anim.fetchNextChange();
- * </pre>
+ * Animation for scrolling text horizontally with stable width.
+ * Maintains consistent width to prevent scoreboard resizing when used in titles.
  */
 public final class ScrollAnimation extends Animation<String> {
-	/** The scroller utility for animation. */
+	
 	private final @NotNull Scroller scroller;
-
+	private final int minWidth;
+	private final boolean maintainWidth;
+	
 	/**
-	 * Constructs a scroll animation for the given text.
+	 * Creates a scroll animation with optional width stabilization
 	 * @param original the text to scroll
 	 * @param width the width of the scroll window
 	 * @param spaceBetween spaces between scroll loops
+	 * @param maintainWidth whether to maintain consistent width
 	 */
-	private ScrollAnimation(String original, int width, int spaceBetween) {
+	private ScrollAnimation(String original, int width, int spaceBetween, boolean maintainWidth) {
 		super(original, ChangesSequence.of());
 		this.scroller = Scroller.of(ChatColor.translateAlternateColorCodes('&', original), width, spaceBetween);
+		this.maintainWidth = maintainWidth;
+		this.minWidth = maintainWidth ? Math.max(original.length(), width + 5) : width;
 	}
-
+	
 	/**
-	 * Creates a scroll animation for the given text.
+	 * Creates a scroll animation (maintains width by default for titles)
 	 * @param msg the text to scroll
 	 * @param width the width of the scroll window
 	 * @param spaceBetween spaces between scroll loops
 	 * @return new ScrollAnimation instance
 	 */
 	public static ScrollAnimation of(String msg, int width, int spaceBetween) {
-		return new ScrollAnimation(msg, width, spaceBetween);
+		return new ScrollAnimation(msg, width, spaceBetween, true);
 	}
-
+	
 	/**
-	 * Gets the next frame of the scroll animation.
-	 * @return scrolled string for the next position
+	 * Creates a scroll animation with explicit width maintenance control
+	 * @param msg the text to scroll
+	 * @param width the width of the scroll window
+	 * @param spaceBetween spaces between scroll loops
+	 * @param maintainWidth whether to maintain consistent width
+	 * @return new ScrollAnimation instance
 	 */
+	public static ScrollAnimation of(String msg, int width, int spaceBetween, boolean maintainWidth) {
+		return new ScrollAnimation(msg, width, spaceBetween, maintainWidth);
+	}
+	
 	@Override
 	public String fetchNextChange() {
-		return scroller.next();
+		String scrolled = scroller.next();
+		
+		if (maintainWidth) {
+			// Calculate actual visible length
+			String stripped = ChatColor.stripColor(scrolled);
+			int currentLength = stripped.length();
+			
+			if (currentLength < minWidth) {
+				// Add invisible padding to maintain width
+				StringBuilder result = new StringBuilder(scrolled);
+				
+				// Add spaces to reach minimum width
+				for (int i = currentLength; i < minWidth; i++) {
+					result.append(" ");
+				}
+				
+				return result.toString();
+			}
+		}
+		
+		return scrolled;
 	}
-
-	/**
-	 * Gets the previous frame of the scroll animation (same as next for this implementation).
-	 * @return scrolled string for the previous position
-	 */
+	
 	@Override
 	public String fetchPreviousChange() {
-		return scroller.next();
+		String scrolled = scroller.next();
+		
+		if (maintainWidth) {
+			// Apply same padding logic
+			String stripped = ChatColor.stripColor(scrolled);
+			int currentLength = stripped.length();
+			
+			if (currentLength < minWidth) {
+				StringBuilder result = new StringBuilder(scrolled);
+				for (int i = currentLength; i < minWidth; i++) {
+					result.append(" ");
+				}
+				return result.toString();
+			}
+		}
+		
+		return scrolled;
 	}
-
 }
