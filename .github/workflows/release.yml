@@ -42,7 +42,6 @@ jobs:
           
       - name: 🚀 Deploy
         run: | 
-          env | grep MAVEN
           ./gradlew publishAndReleaseToMavenCentral
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
