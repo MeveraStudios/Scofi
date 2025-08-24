@@ -113,6 +113,10 @@ public interface Title<T> {
 		public void setTitleAnimation(Animation<T> titleAnimation) {
 			this.titleAnimation = titleAnimation;
 			if(titleAnimation != null) {
+				if(this instanceof LegacyTitle) {
+					this.content = (T) org.bukkit.ChatColor.translateAlternateColorCodes('&', (String) titleAnimation.getOriginal());
+					return;
+				}
 				this.content = titleAnimation.getOriginal();
 			}
 		}
@@ -121,7 +125,7 @@ public interface Title<T> {
 		 * @param animation the animation
 		 * @return the title instance with animation
 		 */
-		@Override @SuppressWarnings("unchecked")
+		@Override
 		public Title<T> withAnimation(@Nullable Animation<T> animation) {
 			setTitleAnimation(animation);
 			return this;
