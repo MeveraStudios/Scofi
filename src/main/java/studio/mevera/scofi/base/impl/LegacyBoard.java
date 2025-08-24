@@ -221,7 +221,7 @@ public class LegacyBoard extends BoardBase<String> {
         
         // Update title with preserved animation state
         updateTitle(
-           ChatColor.translateAlternateColorCodes('&', newTitle.get().orElseThrow(IllegalStateException::new))
+           newTitle.get().orElseThrow(IllegalStateException::new)
         );
         
         // Handle body/lines with animation caching
