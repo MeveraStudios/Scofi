@@ -39,12 +39,11 @@ jobs:
         run: |
           chmod +x ./gradlew
           ./gradlew build
-
-      - name: Debug Environment Variables
-        run: env | grep MAVEN
-
+          
       - name: 🚀 Deploy
-        run: ./gradlew publishAndReleaseToMavenCentral
+        run: | 
+          env | grep MAVEN
+          ./gradlew publishAndReleaseToMavenCentral
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_USERNAME }}
