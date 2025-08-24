@@ -1,5 +1,5 @@
 # Scofi
-Scofi is a modern high performance scoreboard library , heavily inspired by [MrMicky-FR's Fastboard](https://github.com/MrMicky-FR/FastBoard).
+Scofi is a modern high performance scoreboard library , heavily inspired by [MrMicky-FR's Fastboard](https://github.com/MrMicky-FR/FastBoard). </br>
 Scofi ensures a smoother developer experience when creating scoreboards, by providing automations for almost everything.
 
 ## Features
