@@ -17,18 +17,34 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * A manager class to hold the created boards for players online
- * and also to update them in a scheduled task
+ * Main manager class for Scofi, responsible for handling player boards and their updates.
+ * <p>
+ * This class manages the lifecycle of boards for online players, including creation, registration, updating,
+ * and removal. It supports both legacy and modern board adapters, automatically detecting Adventure API support.
+ * Boards are updated asynchronously at a configurable interval.
+ * </p>
+ * <p>
+ * Usage example:
+ * <pre>
+ *     Scofi scofi = Scofi.load(plugin);
+ *     scofi.setupNewBoard(player, adapter);
+ *     scofi.startBoardUpdaters();
+ * </pre>
  *
  * @since 1.0
  * @author Mqzen (aka Mqzn)
  */
 public class Scofi {
 
+	/** The plugin instance using Scofi. */
 	private final @NotNull Plugin plugin;
+	/** The task ID for board updates, if scheduled. */
 	private @Nullable Integer updateTaskId = null;
+	/** Map of player UUIDs to their boards. */
 	private final @NotNull Map<UUID, BoardBase<?>> boards = new HashMap<>();
+	/** Whether Adventure API support is available. */
 	public static final boolean ADVENTURE_SUPPORT;
+	/** Logger for Scofi operations. */
 	private final @Getter Logger logger = Logger.getLogger(this.getClass().getSimpleName());
 
 	static {
@@ -37,18 +53,22 @@ public class Scofi {
 				.isPresent();
 	}
 
+	/** Board update interval in ticks. */
 	private @Getter long updateInterval = 3L; // in ticks
+
+	/**
+	 * Private constructor for singleton pattern.
+	 * @param plugin the plugin instance
+	 */
 	private Scofi(@NotNull Plugin plugin) {
 		this.plugin = plugin;
 	}
 
-
 	/**
-	 * Loads the Scofi instance into memory
-	 * since the class follows The Singleton pattern
-	 * there will be only copy of it's instance in memory
-	 *
-	 * @param plugin the plugin that's using mBoard
+	 * Loads the Scofi instance into memory (singleton).
+	 * @param plugin the plugin that's using Scofi
+	 * @return the loaded Scofi instance
+	 * @throws IllegalArgumentException if plugin is null
 	 */
 	public static Scofi load(Plugin plugin) {
 		if(plugin == null )
@@ -57,7 +77,8 @@ public class Scofi {
 	}
 
 	/**
-	 * Sets the update interval of the boards
+	 * Sets the update interval of the boards.
+	 * If the updater is running, it will be restarted with the new interval.
 	 * @param interval the interval in ticks
 	 */
 	public void setUpdateInterval(long interval) {
@@ -71,14 +92,10 @@ public class Scofi {
 	}
 
 	/**
-	 * Fetches the board created for the player
-	 * whose uuid matches that of the parameter
-	 *
-	 * @param uuid the uuid of the player who is
-	 *             the owner of a board
-	 *
-	 * @return the board made for that player
-	 * returns null if the player has no board registered !
+	 * Fetches the board created for the player whose uuid matches that of the parameter.
+	 * @param uuid the uuid of the player who is the owner of a board
+	 * @return the board made for that player, or null if not registered
+	 * @throws ClassCastException if the board type does not match
 	 */
 	@SuppressWarnings("unchecked")
 	public @Nullable <T> BoardBase<T> getBoard(@NotNull UUID uuid) throws ClassCastException {
@@ -86,27 +103,25 @@ public class Scofi {
 	}
 
 	/**
-	 * Registers a board for a player's uuid
-	 * @param uuid the uuid of the player to register the board for.
-	 * @param mBoard the board to be registered for that uuid
+	 * Registers a board for a player's uuid.
+	 * @param uuid the uuid of the player
+	 * @param mBoard the board to register
 	 */
 	private void registerBoard(UUID uuid, BoardBase<?> mBoard) {
 		boards.put(uuid, mBoard);
 	}
 
 	/**
-	 * Creates a new board and registers it for the player
-	 * using an adapter class that represents some data of the board
-	 * that are needed to be obtained
-	 *
-	 * @param player the player to have the new board created and registered
-	 * @param adapter the info carrier of the board
+	 * Creates a new board and registers it for the player using an adapter.
+	 * @param player the player to register
+	 * @param adapter the board adapter
+	 * @throws UnsupportedOperationException if modern adapter is used without Adventure support
+	 * @throws IllegalStateException if legacy adapter is used in a modern MC version
 	 */
 	public void setupNewBoard(Player player, BoardAdapter<?> adapter) {
 		if(adapter instanceof ModernBoardAdapter && !ADVENTURE_SUPPORT) {
 			throw new UnsupportedOperationException("Use of modern board adapter is not supported in this mc version.");
 		}
-		
 		BoardBase<?> board;
         if (ADVENTURE_SUPPORT) {
 			if (!(adapter instanceof ModernBoardAdapter)) {
@@ -117,15 +132,12 @@ public class Scofi {
         } else {
             board = new LegacyBoard(this, player, (LegacyBoardAdapter) adapter);
         }
-		
         registerBoard(player.getUniqueId(), board);
 	}
 
 	/**
-	 * This deletes the board created for the player
-	 * and unregister it from memory
-	 *
-	 * @param player the owner of a board.
+	 * Deletes and unregisters the board for the given player.
+	 * @param player the owner of the board
 	 */
 	public void removeBoard(@NotNull Player player) {
 		BoardBase<?> board = getBoard(player.getUniqueId());
@@ -136,9 +148,8 @@ public class Scofi {
 	}
 
 	/**
-	 * Start the task of the board updates
-	 * to allow boards to get updated every certain period
-	 *
+	 * Starts the scheduled task for board updates.
+	 * Boards are updated asynchronously every {@link #updateInterval} ticks.
 	 * @see Scofi#setUpdateInterval(long)
 	 */
 	public void startBoardUpdaters() {
@@ -157,16 +168,12 @@ public class Scofi {
 	}
 
 	/**
-	 * Stops the scheduled task for board updates
-	 * Seemed useless to me but thought perhaps someone
-	 * may get a use of it in the future lol
-	 *
+	 * Stops the scheduled task for board updates.
 	 * @see Scofi#startBoardUpdaters()
 	 */
 	public void stopBoardUpdaters() {
 		if(updateTaskId != null)
 			Bukkit.getScheduler().cancelTask(updateTaskId);
 	}
-
 
 }

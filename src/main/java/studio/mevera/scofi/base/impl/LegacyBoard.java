@@ -19,6 +19,20 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Board implementation for legacy Minecraft using String-based lines.
+ * <p>
+ * Handles legacy text, color codes, and compatibility with older scoreboard systems. Caches animations for title and lines to preserve state
+ * across updates. Used internally by Scofi for legacy board rendering and updates.
+ * </p>
+ * <p>
+ * Usage example:
+ * <pre>
+ *     LegacyBoard board = new LegacyBoard(scofi, player, adapter);
+ *     board.updateTitle("Title");
+ *     board.updateLine(0, "Line1");
+ * </pre>
+ */
 @Getter
 public class LegacyBoard extends BoardBase<String> {
     
@@ -45,12 +59,23 @@ public class LegacyBoard extends BoardBase<String> {
     private Animation<String> cachedTitleAnimation;
     private final Map<Integer, Animation<String>> cachedLineAnimations = new HashMap<>();
     
+    /**
+     * Constructs a new LegacyBoard for the given player and adapter.
+     * @param scofi the Scofi manager instance
+     * @param player the player
+     * @param adapter the legacy board adapter
+     */
     public LegacyBoard(Scofi scofi, Player player, LegacyBoardAdapter adapter) {
         super(scofi, player);
         this.adapter = adapter;
         update();
     }
     
+    /**
+     * Updates the scoreboard title, enforcing legacy length limits.
+     * @param title the new title
+     * @throws IllegalArgumentException if title is too long
+     */
     @Override
     public void updateTitle(String title) {
         Objects.requireNonNull(title, "title");
@@ -63,7 +88,9 @@ public class LegacyBoard extends BoardBase<String> {
     }
     
     /**
-     * {@inheritDoc}
+     * Updates all scoreboard lines, enforcing legacy length limits.
+     * @param lines the new lines
+     * @throws IllegalArgumentException if any line is too long
      */
     @Override
     public void updateLines(String... lines) {
@@ -82,11 +109,20 @@ public class LegacyBoard extends BoardBase<String> {
         super.updateLines(lines);
     }
     
+    /**
+     * Gets the update logic from the adapter.
+     * @return board update action
+     */
     @Override
     public BoardUpdate getUpdate() {
         return adapter.getBoardUpdate();
     }
     
+    /**
+     * Sends a line change packet for the given score, handling color codes and splitting.
+     * @param score the line score
+     * @throws Throwable if packet sending fails
+     */
     @Override
     protected void sendLineChange(int score) throws Throwable {
         int maxLength = hasLinesMaxLength() ? 16 : 1024;
@@ -125,6 +161,12 @@ public class LegacyBoard extends BoardBase<String> {
         sendTeamPacket(score, TeamMode.UPDATE, prefix, suffix);
     }
     
+    /**
+     * Converts a String line to a Minecraft chat component for packets.
+     * @param line the legacy string
+     * @return Minecraft chat component
+     * @throws Throwable if conversion fails
+     */
     @Override
     protected Object toMinecraftComponent(String line) throws Throwable {
         if (line == null || line.isEmpty()) {
@@ -134,16 +176,29 @@ public class LegacyBoard extends BoardBase<String> {
         return Array.get(MESSAGE_FROM_STRING.invoke(line), 0);
     }
     
+    /**
+     * Serializes a String line (returns the value itself).
+     * @param value the legacy string
+     * @return the string
+     */
     @Override
     protected String serializeLine(String value) {
         return value;
     }
     
+    /**
+     * Gets an empty string for blank lines.
+     * @return empty string
+     */
     @Override
     protected String emptyLine() {
         return "";
     }
     
+    /**
+     * Updates the board, handling animations and caching for title and lines.
+     * @return true if update succeeded
+     */
     @Override
     public boolean update() {
         // Get new title and body from adapter (for dynamic content)
@@ -199,8 +254,10 @@ public class LegacyBoard extends BoardBase<String> {
     }
     
     /**
-     * Helper method to check if two animations are the "same"
-     * (same original content and type)
+     * Helper method to check if two animations are the same (type and original content).
+     * @param cached cached animation
+     * @param newAnim new animation
+     * @return true if same
      */
     private boolean isSameAnimation(Animation<String> cached, Animation<String> newAnim) {
         // Check if they're the same type and have the same original content

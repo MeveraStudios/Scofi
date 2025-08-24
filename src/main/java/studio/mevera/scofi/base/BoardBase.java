@@ -17,7 +17,22 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
 /**
- * @Author <a href="https://github.com/MrMicky-FR">MrMicky-FR</a>
+ * Abstract base class for managing scoreboard boards and their packet interactions.
+ * <p>
+ * Handles the creation, updating, and deletion of scoreboard objectives, lines, and scores for a player.
+ * Supports multiple Minecraft versions and adapts to server capabilities. Subclasses must implement
+ * update logic and packet serialization for specific content types (String or Component).
+ * </p>
+ * <p>
+ * Usage example:
+ * <pre>
+ *     BoardBase<String> board = new LegacyBoard(scofi, player, adapter);
+ *     board.updateTitle("Title");
+ *     board.updateLines("Line1", "Line2");
+ * </pre>
+ *
+ * @param <T> the type of content for lines and title (String or Component)
+ * @author <a href="https://github.com/MrMicky-FR">MrMicky-FR</a>
  */
 
 public abstract class BoardBase<T> {
@@ -579,6 +594,10 @@ public abstract class BoardBase<T> {
 
         this.deleted = true;
     }
+    /**
+     * Gets the update logic for this board.
+     * @return board update action
+     */
     public abstract BoardUpdate getUpdate();
 
     protected abstract void sendLineChange(int score) throws Throwable;

@@ -6,13 +6,26 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Adapter interface for providing board data and update logic.
+ * <p>
+ * Implement this interface to supply the title, body, and update actions for a scoreboard or board display.
+ * Supports both legacy (String) and modern (Component) types via generics. Used by Scofi to render and update boards for players.
+ * </p>
+ * <p>
+ * Usage example:
+ * <pre>
+ *     public class MyBoardAdapter implements BoardAdapter<String> {
+ *         // Implement getTitle, getBody, getBoardUpdate
+ *     }
+ * </pre>
+ *
+ * @param <T> the type of content (String or Component)
+ */
 public interface BoardAdapter<T> {
 
-
 	/**
-	 * Fetches the title to be represented
-	 * on the board that has this adapter instance;
-	 *
+	 * Fetches the title to be represented on the board for the given player.
 	 * @param player the player who will view the title
 	 * @return the title of the scoreboard
 	 */
@@ -20,11 +33,7 @@ public interface BoardAdapter<T> {
 	Title<T> getTitle(Player player);
 
 	/**
-	 * Gets the body to be represented
-	 * as the body of the scoreboard
-	 * which will occupy this adapter as it's
-	 * model or template to take data from.
-	 *
+	 * Gets the body to be represented as the body of the scoreboard for the given player.
 	 * @param player the player who will view the lines
 	 * @return the body of the scoreboard
 	 */
@@ -32,17 +41,14 @@ public interface BoardAdapter<T> {
 	Body<T> getBody(Player player);
 
 	/**
-	 * Returns an update action if
-	 * the board has any type of animations
-	 * this is recommended to implement and return
-	 * your own implementation.However, the best implementation recommended is this:
-	 * <p>
+	 * Returns an update action if the board has any type of animations.
+	 * Recommended implementation:
+	 * <pre>
 	 *   return (board) -> {
-	 * 		board.updateTitle();
-	 * 		board.updateBody();
+	 *     board.updateTitle();
+	 *     board.updateBody();
 	 *   };
-	 * </p>
-	 *
+	 * </pre>
 	 * @return the actions to be executed as an update to the board
 	 */
 	@Nullable

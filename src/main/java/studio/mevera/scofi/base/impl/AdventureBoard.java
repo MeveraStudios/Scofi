@@ -23,7 +23,20 @@ import java.util.Objects;
 
 import static studio.mevera.scofi.Scofi.ADVENTURE_SUPPORT;
 
-
+/**
+ * Board implementation for modern Minecraft using Adventure {@link Component} lines.
+ * <p>
+ * Handles rich text, animations, and compatibility with Adventure API. Caches animations for title and lines to preserve state
+ * across updates. Converts legacy text to components if needed. Used internally by Scofi for modern board rendering.
+ * </p>
+ * <p>
+ * Usage example:
+ * <pre>
+ *     AdventureBoard board = new AdventureBoard(scofi, player, adapter);
+ *     board.updateTitle(Component.text("Title"));
+ *     board.updateLine(0, Component.text("Line1"));
+ * </pre>
+ */
 @Getter
 public class AdventureBoard extends BoardBase<Component> {
     
@@ -56,6 +69,12 @@ public class AdventureBoard extends BoardBase<Component> {
     private Animation<Component> cachedTitleAnimation;
     private final Map<Integer, Animation<Component>> cachedLineAnimations = new HashMap<>();
     
+    /**
+     * Constructs a new AdventureBoard for the given player and adapter.
+     * @param scofi the Scofi manager instance
+     * @param player the player
+     * @param adapter the modern board adapter
+     */
     public AdventureBoard(Scofi scofi, Player player, ModernBoardAdapter adapter) {
         super(scofi, player);
         this.adapter = adapter;
@@ -66,11 +85,20 @@ public class AdventureBoard extends BoardBase<Component> {
         }
     }
     
+    /**
+     * Gets the update logic from the adapter.
+     * @return board update action
+     */
     @Override
     public BoardUpdate getUpdate() {
         return adapter.getBoardUpdate();
     }
     
+    /**
+     * Sends a line change packet for the given score.
+     * @param score the line score
+     * @throws Throwable if packet sending fails
+     */
     @Override
     protected void sendLineChange(int score) throws Throwable {
         Component line = getLineByScore(score);
@@ -78,6 +106,12 @@ public class AdventureBoard extends BoardBase<Component> {
         sendTeamPacket(score, TeamMode.UPDATE, line, null);
     }
     
+    /**
+     * Converts a Component to a Minecraft chat component for packets.
+     * @param component the Adventure component
+     * @return Minecraft chat component
+     * @throws Throwable if conversion fails
+     */
     @Override
     protected Object toMinecraftComponent(Component component) throws Throwable {
         if (component == null) {
@@ -95,16 +129,29 @@ public class AdventureBoard extends BoardBase<Component> {
         return COMPONENT_METHOD.invoke(component);
     }
     
+    /**
+     * Serializes a Component to legacy text.
+     * @param value the Adventure component
+     * @return legacy string
+     */
     @Override
     protected String serializeLine(Component value) {
         return LegacyComponentSerializer.legacySection().serialize(value);
     }
     
+    /**
+     * Gets an empty Adventure component for blank lines.
+     * @return empty component
+     */
     @Override
     protected Component emptyLine() {
         return Component.empty();
     }
     
+    /**
+     * Updates the board, handling animations and caching for title and lines.
+     * @return true if update succeeded, false if legacy fallback was used
+     */
     @Override
     public boolean update() {
         try {
@@ -178,8 +225,10 @@ public class AdventureBoard extends BoardBase<Component> {
     }
     
     /**
-     * Helper method to check if two animations are the "same"
-     * (same original content and type)
+     * Helper method to check if two animations are the same (type and original content).
+     * @param cached cached animation
+     * @param newAnim new animation
+     * @return true if same
      */
     private boolean isSameAnimation(Animation<Component> cached, Animation<Component> newAnim) {
         // Check if they're the same type and have the same original content
