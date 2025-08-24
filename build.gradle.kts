@@ -113,8 +113,8 @@ mavenPublishing {
     }
 
     if (!gradle.startParameter.taskNames.any { it == "publishToMavenLocal" }) {
-        signAllPublications()
         publishToMavenCentral()
+        signAllPublications()
     }
 }
 
