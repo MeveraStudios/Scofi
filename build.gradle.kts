@@ -1,12 +1,8 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.javadoc.Javadoc
-import org.gradle.external.javadoc.StandardJavadocDocletOptions
 
 plugins {
     java
-    id("java-library")
-    id("com.gradleup.shadow") version "8.3.9" // Note: 8.3.9 is not a valid version, latest is 8.1.1
     id("com.vanniktech.maven.publish") version "0.29.0" // Note: 0.33.0 is not a valid version, latest is 0.29.0
 }
 
@@ -20,7 +16,6 @@ java {
     }
     // Generate sources and javadoc jars
     withSourcesJar()
-    withJavadocJar()
 }
 
 // Compiler options - Compile with Java 17 but target Java 8 bytecode for compatibility
@@ -125,30 +120,6 @@ mavenPublishing {
     }
 }
 
-
-// Shadow JAR configuration
-tasks.named<ShadowJar>("shadowJar") {
-    archiveBaseName.set("Scofi")
-    archiveClassifier.set("")
-    archiveVersion.set(project.version.toString())
-
-    // Minimize JAR size (be careful with reflection)
-    minimize {
-        // Exclude classes that might be accessed via reflection
-        exclude(dependency("org.spigotmc:.*"))
-    }
-
-    // Merge service files
-    mergeServiceFiles()
-
-    // Set the output directory (uncomment and modify as needed)
-    // destinationDirectory.set(file("D:\\minecraft-dev\\servers\\paper-1.20\\plugins"))
-}
-
-// Build task configuration
-tasks.named("build") {
-    dependsOn(tasks.named("shadowJar"))
-}
 
 // Javadoc configuration for Java 17
 tasks.withType<Javadoc> {
