@@ -95,6 +95,12 @@ public final class FastReflection {
         return optionalClass(nmsClassName(post1_17package, className));
     }
 
+    public static Optional<Class<?>> nmsOptionalClass(String post1_17package, String spigotClass, String mojangClass) {
+        return optionalClass(nmsClassName(post1_17package, MOJANG_MAPPINGS ? mojangClass : spigotClass));
+    }
+
+
+
     /**
      * Gets the fully qualified OBC class name for a given class.
      * @param className class name
