@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "studio.mevera"
-version = "2.0.0"
+version = "2.1.0"
 
 
 // Configure Java 17 for compilation but target Java 8 for compatibility
