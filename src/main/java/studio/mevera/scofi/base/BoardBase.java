@@ -327,7 +327,6 @@ public abstract class BoardBase<T> {
      */
     public synchronized void updateLine(int line, T text) {
         updateLine(line, text, null);
-
     }
 
     /**

@@ -5,6 +5,7 @@ import studio.mevera.scofi.animation.core.Animation;
 import studio.mevera.scofi.base.BoardBase;
 import studio.mevera.scofi.base.BoardUpdate;
 import studio.mevera.scofi.base.LegacyBoardAdapter;
+import studio.mevera.scofi.entity.Body;
 import studio.mevera.scofi.entity.Line;
 import studio.mevera.scofi.entity.Title;
 import studio.mevera.scofi.util.FastReflection;
@@ -58,7 +59,7 @@ public class LegacyBoard extends BoardBase<String> {
     // Cache for animations to preserve their state
     private Animation<String> cachedTitleAnimation;
     private final Map<Integer, Animation<String>> cachedLineAnimations = new HashMap<>();
-    
+
     /**
      * Constructs a new LegacyBoard for the given player and adapter.
      * @param scofi the Scofi manager instance
@@ -207,7 +208,7 @@ public class LegacyBoard extends BoardBase<String> {
         // Handle title animation caching
         if (newTitle.loadAnimation().isPresent()) {
             Animation<String> newTitleAnimation = newTitle.loadAnimation().get();
-            
+
             // If we don't have a cached animation or it's a different animation, cache it
             if (cachedTitleAnimation == null || !isSameAnimation(cachedTitleAnimation, newTitleAnimation)) {
                 cachedTitleAnimation = newTitleAnimation;
@@ -223,16 +224,17 @@ public class LegacyBoard extends BoardBase<String> {
         updateTitle(
            newTitle.get().orElseThrow(IllegalStateException::new)
         );
-        
+
+        Body<String> newBody = adapter.getBody(getPlayer());
+
         // Handle body/lines with animation caching
-        for (Line<String> line : adapter.getBody(getPlayer()).getLines()) {
-            int index = line.getIndex();
-            
+        for (int index = 0; index < newBody.getLines().size(); index++) {
+            Line<String> line = newBody.getLines().get(index);
             // Handle line animation caching
             if (line.getAnimation() != null) {
                 Animation<String> lineAnimation = line.getAnimation();
                 Animation<String> cachedAnimation = cachedLineAnimations.get(index);
-                
+
                 // If we don't have a cached animation or it's different, cache the new one
                 if (cachedAnimation == null || !isSameAnimation(cachedAnimation, lineAnimation)) {
                     cachedLineAnimations.put(index, lineAnimation);
@@ -247,11 +249,11 @@ public class LegacyBoard extends BoardBase<String> {
             
             updateLine(index, line.fetchContent());
         }
-        
+
         // Clean up cached animations for lines that no longer exist
         int bodySize = adapter.getBody(getPlayer()).getLines().size();
         cachedLineAnimations.entrySet().removeIf(entry -> entry.getKey() >= bodySize);
-        
+
         return true;
     }
     
