@@ -246,7 +246,7 @@ public class LegacyBoard extends BoardBase<String> {
                 // Remove cached animation if line no longer has one
                 cachedLineAnimations.remove(index);
             }
-            
+
             updateLine(index, line.fetchContent());
         }
 
@@ -256,7 +256,8 @@ public class LegacyBoard extends BoardBase<String> {
 
         return true;
     }
-    
+
+
     /**
      * Helper method to check if two animations are the same (type and original content).
      * @param cached cached animation
