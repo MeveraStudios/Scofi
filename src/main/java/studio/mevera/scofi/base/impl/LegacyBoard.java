@@ -204,46 +204,48 @@ public class LegacyBoard extends BoardBase<String> {
     public boolean update() {
         // Get new title and body from adapter (for dynamic content)
         Title<String> newTitle = adapter.getTitle(getPlayer());
-        
+
         // Handle title animation caching
         if (newTitle.loadAnimation().isPresent()) {
             Animation<String> newTitleAnimation = newTitle.loadAnimation().get();
 
-            // If we don't have a cached animation or it's a different animation, cache it
             if (cachedTitleAnimation == null || !isSameAnimation(cachedTitleAnimation, newTitleAnimation)) {
                 cachedTitleAnimation = newTitleAnimation;
             } else {
-                // Use the cached animation to preserve state
                 newTitle.setTitleAnimation(cachedTitleAnimation);
             }
         } else {
             cachedTitleAnimation = null;
         }
-        
+
         // Update title with preserved animation state
-        updateTitle(
-           newTitle.get().orElseThrow(IllegalStateException::new)
-        );
+        updateTitle(newTitle.get().orElseThrow(IllegalStateException::new));
 
         Body<String> newBody = adapter.getBody(getPlayer());
+        int newBodySize = newBody.getLines().size();
+        int currentSize = size(); // Current number of lines in the scoreboard
+
+        // CRITICAL FIX: Remove lines that no longer exist (when body shrinks)
+        while (currentSize > newBodySize) {
+            removeLine(currentSize - 1);
+            currentSize--;
+        }
 
         // Handle body/lines with animation caching
-        for (int index = 0; index < newBody.getLines().size(); index++) {
+        for (int index = 0; index < newBodySize; index++) {
             Line<String> line = newBody.getLines().get(index);
+
             // Handle line animation caching
             if (line.getAnimation() != null) {
                 Animation<String> lineAnimation = line.getAnimation();
                 Animation<String> cachedAnimation = cachedLineAnimations.get(index);
 
-                // If we don't have a cached animation or it's different, cache the new one
                 if (cachedAnimation == null || !isSameAnimation(cachedAnimation, lineAnimation)) {
                     cachedLineAnimations.put(index, lineAnimation);
                 } else {
-                    // Use cached animation to preserve state
                     line.setAnimation(cachedAnimation);
                 }
             } else {
-                // Remove cached animation if line no longer has one
                 cachedLineAnimations.remove(index);
             }
 
@@ -251,8 +253,7 @@ public class LegacyBoard extends BoardBase<String> {
         }
 
         // Clean up cached animations for lines that no longer exist
-        int bodySize = adapter.getBody(getPlayer()).getLines().size();
-        cachedLineAnimations.entrySet().removeIf(entry -> entry.getKey() >= bodySize);
+        cachedLineAnimations.entrySet().removeIf(entry -> entry.getKey() >= newBodySize);
 
         return true;
     }
