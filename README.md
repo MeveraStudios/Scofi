@@ -11,4 +11,4 @@ Scofi ensures a smoother developer experience when creating scoreboards, by prov
 
 ## Getting started
 Please visit our documentation to start using Scofi.</br>
-**Documentation:** https://docs.mevera.studio/Scofi
+**Documentation:** https://mevera.studio/docs/Scofi/v2/core-concepts/Introduction
